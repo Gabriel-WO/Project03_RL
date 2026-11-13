@@ -30,10 +30,17 @@ _VEC = [(0, -1), (1, 0), (0, 1), (-1, 0)]
 
 
 class Renderer:
+    HEADER_H, FOOTER_H = 64, 84
+
+    @staticmethod
+    def window_size(grid, cell=40):
+        """Pixel size of the game window (the menu uses the same size)."""
+        return grid * cell, Renderer.HEADER_H + grid * cell + Renderer.FOOTER_H
+
     def __init__(self, grid, cell=40, fps=15, title="Snake RL"):
         pygame.init()
         self.grid, self.cell, self.fps = grid, cell, fps
-        self.header_h, self.footer_h = 64, 46
+        self.header_h, self.footer_h = self.HEADER_H, self.FOOTER_H
         self.width = grid * cell
         self.screen = pygame.display.set_mode(
             (self.width, self.header_h + grid * cell + self.footer_h))
@@ -43,6 +50,9 @@ class Renderer:
         self.clock = pygame.time.Clock()
         self.paused = False
         self.best = 0
+        # Set by key presses; train.py reads and clears them.
+        self.skip_request = False    # RIGHT: skip ahead
+        self.finish_request = False  # ENTER: finish training at full speed
 
     # ------------------------------------------------------------- drawing
     def draw(self, env, hud_lines=(), q_values=None):
@@ -61,6 +71,30 @@ class Renderer:
             return True
         pygame.display.flip()
         self.clock.tick(self.fps)
+        return True
+
+    def draw_progress(self, title, done, total, lines=(), hints=()):
+        """Progress screen shown while training runs without drawing games.
+        Keeps the window responsive. Returns False if the user asked to quit."""
+        if not self._handle_events():
+            return False
+        self.paused = False
+        h, cx = self.header_h, self.width // 2
+        self.screen.fill(HEADER)
+        pygame.draw.rect(self.screen, LIGHT, (0, h, self.width, self.grid * self.cell))
+        self._text(self.big, title, (cx, h // 2), WHITE, anchor="center")
+        bar = pygame.Rect(40, h + 130, self.width - 80, 28)
+        pygame.draw.rect(self.screen, DARK, bar, border_radius=14)
+        fill = bar.copy()
+        fill.width = int(bar.width * min(1.0, done / max(1, total)))
+        if fill.width > 0:
+            pygame.draw.rect(self.screen, SNAKE, fill, border_radius=14)
+        self._text(self.big, f"{done:,} / {total:,}", (cx, bar.bottom + 36), HEADER, anchor="center")
+        for i, line in enumerate(lines):
+            self._text(self.small, line, (cx, bar.bottom + 80 + i * 24), HEADER, anchor="center")
+        self._draw_footer(hints, None)
+        pygame.display.flip()
+        self.clock.tick(60)
         return True
 
     def _draw_scene(self, env, hud_lines, q_values):
@@ -141,7 +175,7 @@ class Renderer:
     def _draw_footer(self, hud_lines, q_values):
         y0 = self.header_h + self.grid * self.cell
         pygame.draw.rect(self.screen, FOOTER, (0, y0, self.width, self.footer_h))
-        lines = list(hud_lines)[:1]  # one info line (episode / game number)
+        lines = list(hud_lines)[:3]  # info + key hints
         if q_values is not None:  # the agent's "thoughts", handy for the presentation
             best = int(max(range(3), key=lambda i: q_values[i]))
             lines.append("   ".join(
@@ -171,10 +205,14 @@ class Renderer:
                     return False
                 if event.key == pygame.K_SPACE:
                     self.paused = not self.paused
-                if event.key == pygame.K_UP:
-                    self.fps = min(240, self.fps + 5)
+                if event.key == pygame.K_UP:  # multiplicative so it reaches fast speeds quickly
+                    self.fps = min(1000, int(self.fps * 1.5) + 1)
                 if event.key == pygame.K_DOWN:
-                    self.fps = max(2, self.fps - 5)
+                    self.fps = max(2, int(self.fps / 1.5))
+                if event.key == pygame.K_RIGHT:
+                    self.skip_request = True
+                if event.key == pygame.K_RETURN:
+                    self.finish_request = True
         return True
 
     def close(self):

@@ -25,8 +25,8 @@ def play(model, state_mode="basic", reward="sparse", grid=12, fps=15, games=20):
         s, done = env.reset(), False
         while not done and running:
             action = agent.act(s, greedy=True)
-            hud = [f"game {game}/{games}", f"score {env.score}   best {max(best, env.score)}",
-                   "UP/DOWN speed   SPACE pause   ESC quit"]
+            hud = [f"Game {game}/{games}   speed {renderer.fps}",
+                   "UP/DOWN speed   SPACE pause   ESC back to menu"]
             running = renderer.draw(env, hud, agent.q[s])
             s, _, done, _ = env.step(action)
         best = max(best, env.score)

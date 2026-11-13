@@ -46,7 +46,7 @@ PROFILES = {
 }
 
 # Two state designs that we compare in experiments.py
-STATE_MODES = ("basic", "trap")
+STATE_MODES = ("basic", "trap", "safe")
 
 
 class SnakeEnv:
@@ -123,6 +123,7 @@ class SnakeEnv:
 
         basic (11 bits): danger straight/right/left, heading one-hot (4),
                          food is up/right/down/left of head (4)
+        safe  (17 bits): trap + 3 'cut-off' bits (see _tail_reachable).
         trap  (14 bits): basic + 3 'trap' bits. A trap bit is 1 when moving
                          that way is NOT an immediate crash but leads into a
                          pocket with less free room than the snake's length
@@ -136,8 +137,10 @@ class SnakeEnv:
         fx, fy = self.food
         hx, hy = head
         feats += [fy < hy, fx > hx, fy > hy, fx < hx]
-        if self.state_mode == "trap":
+        if self.state_mode in ("trap", "safe"):
             feats += [(not self._blocked(p)) and self._is_trap(p) for p in moves]
+        if self.state_mode == "safe":
+            feats += [(not self._blocked(p)) and not self._tail_reachable(p) for p in moves]
         state = 0
         for bit in feats:
             state = (state << 1) | int(bit)
@@ -172,6 +175,25 @@ class SnakeEnv:
                     seen.add(n)
                     queue.append(n)
         return len(seen) < need
+
+    def _tail_reachable(self, start):
+        """
+        True if, after stepping to `start`, the head can still reach the snake's
+        tail. If it can't, the snake has sealed itself into a closed region with
+        no way out - the classic way long snakes die. Full flood fill (no early stop).
+        """
+        tail = self.snake[-1]
+        seen, queue = {start}, deque([start])
+        while queue:
+            x, y = queue.popleft()
+            for dx, dy in DIRS.values():
+                n = (x + dx, y + dy)
+                if n == tail:
+                    return True
+                if n not in seen and not self._blocked(n):
+                    seen.add(n)
+                    queue.append(n)
+        return False
 
     def _place_food(self):
         free = [(x, y) for x in range(self.grid) for y in range(self.grid)
