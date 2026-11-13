@@ -4,8 +4,7 @@ A Pygame version of Snake where the agent is **never told the rules**. It only s
 description of its surroundings and a reward number after each move, and learns to play with
 **tabular Q-learning**.
 
-> **Author:** _(your name)_  |  **Class:** ADV CS III: Machine Learning and AI  |  **Teacher:** Mr. Cochran
-> **Collaborators / help received:** _(list classmates who helped you, if any)_
+> **Author:** _Gabriel Whangbo-Olvera_  |  **Class:** ADV CS III: Machine Learning and AI  |  **Teacher:** Mr. Cochran
 
 ## Quick start
 
@@ -206,8 +205,3 @@ That is the price of a small, inspectable table. Ideas: add a Q-table for longer
 I used **Claude (Anthropic)** to help build this project. Claude helped me plan the project structure and wrote the initial
 versions of the code in `snake_env.py`, `agent.py`, `train.py`, `play.py`, `render.py`, `menu.py`, `main.py`, and `experiments.py`, along with the first
 draft of this README. It also ran the experiments that produced the results above. Each source file begins with a comment noting this.
-
-_(Add how YOU used it and what you changed or learned: for example, which parameters you tuned, what you tested yourself,
-and which parts you can explain from memory.)_
-
-Other resources consulted: _(list any websites from the project handout you actually used)_
