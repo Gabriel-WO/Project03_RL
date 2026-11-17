@@ -200,8 +200,6 @@ That is the price of a small, inspectable table. Ideas: add a Q-table for longer
 
 ## AI Use Disclosure (Honor Code)
 
-> **Edit this section so it is accurate and in your own words before submitting.**
-
 I used **Claude (Anthropic)** to help build this project. Claude helped me plan the project structure and wrote the initial
 versions of the code in `snake_env.py`, `agent.py`, `train.py`, `play.py`, `render.py`, `menu.py`, `main.py`, and `experiments.py`, along with the first
 draft of this README. It also ran the experiments that produced the results above. Each source file begins with a comment noting this.
